@@ -13,7 +13,7 @@
 2. А так же имеется `.gitlab-ci.yml` содержащий в себе:
 ```yaml
 include:
-  - project: 'aidep/iac/newpipeline'
+  - project: 'diploma-usmanov/iac/multi-helm-chart-ci'
     ref: master
     file: 'Kubernetes.gitlab-ci.yml'
 
