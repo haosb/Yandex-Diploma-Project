@@ -6,14 +6,12 @@
 helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
 helm install prometheus prometheus-community/prometheus -f promvalues.yaml -n monitoring --create-namespace
 ```
-https://prometheus.momo.dtc.tatar/
 
 - Grafana
 ```bash
 helm repo add grafana https://grafana.github.io/helm-charts
 helm install grafana grafana/grafana -f grafanavalues.yaml -n monitoring --create-namespace
 ```
-https://grafana.momo.dtc.tatar/
 
 - Loki
 ```bash

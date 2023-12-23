@@ -1,4 +1,4 @@
-# Ansible Roles for Yandex Diploma Kubernetes Cluster
+# Ansible Roles для Yandex Diploma Kubernetes Cluster
 
 #### Base Role
 Базовая настройка для жизнедеятельности кластера
@@ -12,8 +12,8 @@
 - Деплой Ingress Nginx Controller с доп. настройками
 
 #### Запуск
-1. В group_vars изменить данные если нужно
-2. В файле 1credentials.yaml указать креды, изменить название на credentials.yaml
+1. В group_vars изменить данные если необходимо
+2. В файле `1credentials.yaml` указать креды, скопировать его в `credentials.yaml`
 3. Запустить командой
 ```bash
 ansible-playbook playbook.yaml -i inventory/vms.yaml -e @credentials.yaml
