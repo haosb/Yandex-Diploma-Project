@@ -1,0 +1,6 @@
+release-chart:
+  image: dtzar/helm-kubectl:latest
+  script:
+    - helm package .helm
+    - export FILE=$(ls | grep momo-multi)
+    - curl --upload-file $FILE -u $NEXUS_USER:$NEXUS_PASSWORD https://nexus.k8s.praktikum-services.tech/repository/diploma-usmanov-ruslan/

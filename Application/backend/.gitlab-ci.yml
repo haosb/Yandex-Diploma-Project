@@ -1,0 +1,16 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - project: 'diploma-usmanov/iac/multi-helm-chart-ci'
+    ref: master
+    file: 'Kubernetes.gitlab-ci.yml'
+
+stages:
+  - test
+  - build
+  - deploy
+
+go-test:
+  stage: test
+  image: golang:alpine
+  script:
+    - go test -v ./...

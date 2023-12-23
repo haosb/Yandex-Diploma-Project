@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}
+    spec:
+      containers:
+        - name: {{ .Release.Name }}
+          {{- if .Values.extraArgs }}
+          args:
+            {{- range .Values.extraArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          image: {{ .Values.global.IMAGE_PATH }}
+          env:
+            - name: KUBERNETES_DEPLOYED
+              value: {{ now }}
+{{- include "app_envs" . | indent 12 }}
+      imagePullSecrets:
+        - name: registrysecret
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Release.Name }}
+  labels:
+    app: {{ .Release.Name }}
+spec:
+  ports:
+    - port: {{ .Values.port }}
+  selector:
+    app: {{ .Release.Name }}

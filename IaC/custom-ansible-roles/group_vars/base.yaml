@@ -1,0 +1,5 @@
+registry_url: gitlab.praktikum-services.ru:5050 # Standard Gitlab Container Registry
+secret_name: registrysecret
+secret_namespace: kube-system
+cert_manager_ingress_class: nginx
+cert_manager_ref_name: letsencrypt-prod

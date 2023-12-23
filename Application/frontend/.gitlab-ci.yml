@@ -1,0 +1,13 @@
+include:
+  - template: Security/SAST.gitlab-ci.yml
+  - project: 'diploma-usmanov/iac/multi-helm-chart-ci'
+    ref: master
+    file: 'Kubernetes.gitlab-ci.yml'
+
+variables:
+  CI_URL: "https://momo.dtc.tatar"
+
+stages:
+  - test
+  - build
+  - deploy

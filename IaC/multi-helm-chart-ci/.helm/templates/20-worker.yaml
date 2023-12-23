@@ -1,0 +1,30 @@
+{{ if .Values.extraContainerArgs }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ .Release.Name }}-worker
+spec:
+  replicas: 1
+  revisionHistoryLimit: 0
+  selector:
+    matchLabels:
+      app: {{ .Release.Name }}-worker
+  template:
+    metadata:
+      labels:
+        app: {{ .Release.Name }}-worker
+    spec:
+      containers:
+        - name: {{ .Release.Name }}-worker
+          args:
+            {{- range .Values.extraContainerArgs }}
+            - {{ . | quote }}
+            {{- end }}
+          image: {{ .Values.global.IMAGE_PATH }}
+          env:
+            - name: KUBERNETES_DEPLOYED
+              value: {{ now }}
+{{- include "app_envs" . | indent 12 }}
+      imagePullSecrets:
+        - name: registrysecret
+{{ end }}

@@ -1,0 +1,94 @@
+- name: Install pip3
+  become: true
+  apt:
+    name: python3-pip
+    state: present 
+
+- name: Install Python requirements
+  become: true
+  pip:
+    name:
+      - openshift
+      - pyyaml
+      - kubernetes
+
+- name: Install Helm
+  become: true
+  shell: |
+    curl -fsSL -o get_helm.sh https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3
+    chmod 700 get_helm.sh
+    ./get_helm.sh
+
+- name: Define New VAR for ImagePull Config
+  ansible.builtin.set_fact:
+    auth_token: "{{ (registry_token ~ ':' ~ registry_password) | b64encode }}"
+
+- name: Create Kubernetes Secret for ImagePull
+  become: true
+  kubernetes.core.k8s:
+    state: present
+    definition: 
+      apiVersion: v1
+      kind: Secret
+      type: kubernetes.io/dockerconfigjson             
+      metadata:
+        name: "{{ secret_name }}"
+        namespace: "{{ secret_namespace }}"     
+      data:
+        .dockerconfigjson: "{{ lookup('template', 'docker-config.j2' ) | tojson | b64encode | trim }}"
+
+- name: Add Cert-Manager Repo
+  kubernetes.core.helm_repository:
+    name: jetstack
+    repo_url: https://charts.jetstack.io
+
+- name: Deploy Cert-Manager
+  kubernetes.core.helm:
+    name: cert-manager
+    chart_ref: jetstack/cert-manager
+    release_namespace: cert-manager
+    create_namespace: true
+    values:
+      installCRDs: true
+
+- name: Add Issuer to Cert-Manager
+  kubernetes.core.k8s:
+    state: present
+    definition:
+      apiVersion: cert-manager.io/v1
+      kind: ClusterIssuer
+      metadata:
+        name: "{{ cert_manager_ref_name }}"
+      spec:
+        acme:
+          server: https://acme-v02.api.letsencrypt.org/directory
+          email: "{{ cert_manager_administrator_email }}"
+          privateKeySecretRef:
+            name: "{{ cert_manager_ref_name }}"
+          solvers:
+          - http01:
+              ingress:
+                class: "{{ cert_manager_ingress_class }}"
+
+- name: Add Ingress Nginx Repo
+  kubernetes.core.helm_repository:
+    name: ingress-nginx
+    repo_url: https://kubernetes.github.io/ingress-nginx
+
+- name: Deploy Ingress Nginx
+  kubernetes.core.helm:
+    name: ingress-nginx
+    chart_ref: ingress-nginx/ingress-nginx
+    release_namespace: ingress-nginx
+    create_namespace: true
+    values:
+      controller:
+        service:
+          type: ClusterIP
+        config:
+          enable-brotli: true
+        hostNetwork: true
+        nodeSelector:
+          controller: nginx
+        metrics:
+          enabled: true

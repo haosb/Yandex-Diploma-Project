@@ -1,0 +1,27 @@
+{{ if .Values.global.ci_url }}
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: {{ .Release.Name }}
+  annotations:
+  {{- range $key, $value := .Values.ingressAnnotations }}
+    {{ $key }}: {{ $value | quote }}
+  {{- end }}
+spec:
+  ingressClassName: nginx
+  rules:
+  - host: {{ .Values.global.ci_url }}
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: {{ .Release.Name }}
+            port:
+              number: {{ .Values.port }}
+  tls:
+  - hosts:
+    - {{ .Values.global.ci_url }}
+    secretName: {{ .Release.Name }}-tls
+{{ end }}

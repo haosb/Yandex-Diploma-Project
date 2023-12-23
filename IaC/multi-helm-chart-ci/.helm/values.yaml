@@ -1,0 +1,10 @@
+port: 5000
+extraArgs: {}
+  # - echo
+  # - "1"
+extraContainerArgs: {}
+ingressAnnotations:
+  cert-manager.io/cluster-issuer: "letsencrypt-prod"
+app:
+  TEST:
+    _default: "teston"

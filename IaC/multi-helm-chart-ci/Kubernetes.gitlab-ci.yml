@@ -1,0 +1,56 @@
+
+# Переменные по умолчанию, переопределение в другом репозитории изменит и тут
+variables:
+  RUNNER_TAG: k8s
+  CI_NAMESPACE: momo-store # Первый namespace для production
+  CI_URL: "" # URL для доступа к приложению, если не указывать, то не создаст Ingress
+  GITLAB_VARIABLES: "" # Название созданных Gitlab Variables без указания $, разделитель ..
+
+before_script:
+    - if [[ "$CI_COMMIT_REF_NAME" == "master" || "$CI_COMMIT_REF_NAME" == "main" ]]; then
+        export CI_NAMESPACE=$(echo $CI_NAMESPACE);
+        export CI_URL=$(echo $CI_URL);
+      fi
+    - export HELM_RELEASE=$CI_PROJECT_NAME
+    - export IMAGE_PATH=$CI_REGISTRY_IMAGE
+
+build:
+  stage: build
+  image:
+    name: gcr.io/kaniko-project/executor:v1.9.0-debug
+    entrypoint: [""]
+  script:
+    - /kaniko/executor
+      --context "${CI_PROJECT_DIR}"
+      --dockerfile "${CI_PROJECT_DIR}/Dockerfile"
+      --destination "${CI_REGISTRY_IMAGE}:latest"
+      --cache=true
+
+deploy:
+  stage: deploy
+  image: dtzar/helm-kubectl:latest
+  tags:
+    - $RUNNER_TAG
+  environment:
+    name: production
+  script:
+    - set -x
+    - mkdir -p $HOME/.kube
+    - echo ${K8S_CONFIG} | base64 -d > $HOME/.kube/config
+    - kubectl get ns $CI_NAMESPACE || kubectl create namespace $CI_NAMESPACE
+    - echo $CI_NAMESPACE $HELM_RELEASE
+    - kubectl get secret registrysecret -n kube-system -o json |
+      jq ".metadata.namespace = \"$CI_NAMESPACE\"|
+      del(.metadata.annotations,.metadata.creationTimestamp,.metadata.resourceVersion,.metadata.selfLink,.metadata.uid)" |
+      kubectl apply -f -
+    - export SECRETS=$(echo $GITLAB_VARIABLES | tr ".." " ")
+    - helm repo add nexus --username $NEXUS_USER --password $NEXUS_PASSWORD https://nexus.k8s.praktikum-services.tech/repository/diploma-usmanov-ruslan/
+    - helm upgrade --debug --install -n $CI_NAMESPACE $HELM_RELEASE --values=values.yaml nexus/momo-multi-helm
+      --set global.ci_url=$(cut -d / -f 3 <<< $CI_URL)
+      --set global.IMAGE_PATH=${IMAGE_PATH}
+      --set global.env=${ENVIRONMENT}
+      $(for secret in $SECRETS; do echo "--set global.$secret=$(eval echo \$$secret)"; done)
+      --timeout 1500s
+      --wait
+  only:
+    - main

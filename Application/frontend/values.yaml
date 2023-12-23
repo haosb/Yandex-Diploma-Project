@@ -1,0 +1,7 @@
+port: 80
+extraArgs: {}
+  # - echo
+  # - "1"
+extraContainerArgs: {}
+ingressAnnotations:
+  cert-manager.io/cluster-issuer: "letsencrypt-prod"

@@ -1,0 +1,31 @@
+global:
+  dnsService: coredns
+loki:
+  server:
+    grpc_server_max_recv_msg_size: 8388608
+    grpc_server_max_send_msg_size: 8388608
+  structuredConfig:
+    ingester:
+      max_transfer_retries: 0
+      chunk_idle_period: 1h
+      chunk_target_size: 1536000
+      max_chunk_age: 1h
+    storage_config:
+      aws:
+        endpoint: https://storage.yandexcloud.net
+        insecure: true
+        bucketnames: usmanov-terraform
+        access_key_id: CHANGE
+        secret_access_key: CHANGE
+        s3forcepathstyle: true
+      boltdb_shipper:
+        shared_store: s3
+    schema_config:
+      configs:
+        - from: 2022-06-21
+          store: boltdb-shipper
+          object_store: s3
+          schema: v12
+          index:
+            prefix: loki_index_
+            period: 24h
